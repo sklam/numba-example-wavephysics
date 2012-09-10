@@ -1,4 +1,4 @@
-import sys, pygame
+import sys, pygame, time
 try:
     from cPickle import pickle
 except ImportError:
@@ -8,13 +8,13 @@ from math import ceil
 import contextlib
 
 RADIUS = 1
-MASS = 1.
-HOOKE_K = 48200.
-SPEEDUP = 60
-SUBDIVISION = 4
+MASS = .01
+HOOKE_K = 1125000.
+SUBDIVISION = 184
 FRAMERATE = 60
 DAMPING = 0.0001
-PLUNK_MULTIPLIER = 100.
+PLUNK_MULTIPLIER = 20000.
+PARTICLE_COUNT = 64
 
 class Recorder:
     def __init__(self, filename):
@@ -35,9 +35,9 @@ class Recorder:
             pickle.dump(self.buf, fout)
 
 def calc_impulse(strength):
-    duration = 1./250. * SPEEDUP
-    period = 1. / (4 * duration * FRAMERATE)
-    x = np.arange(duration * FRAMERATE) * period
+    duration = 1./250.
+    period = 1. / (4 * duration * FRAMERATE * SUBDIVISION)
+    x = np.arange(duration * FRAMERATE * SUBDIVISION) * period
     return (strength * np.sin(2 * np.pi * x)).tolist()
 
 class Plunk:
@@ -67,7 +67,7 @@ def main(physics, filename):
 
     clock = pygame.time.Clock()
 
-    count = 64
+    count = PARTICLE_COUNT
 
     masspoints = np.empty((2, count, 2), dtype=np.float64)
     initpos = np.zeros(count, dtype=np.float64)
@@ -94,19 +94,16 @@ def main(physics, filename):
 
             screen.fill(white)              # clear screen
 
-            for i in xrange(SPEEDUP):
+
+            for _ in xrange(SUBDIVISION):
                 f = plunk.next()
-                for _ in range(SUBDIVISION):
-                    physics(masspoints, 1./(SUBDIVISION * FRAMERATE), f, plunk_pos)
-                pos = masspoints[0, plunk_pos]
+                physics(masspoints, 1./(SUBDIVISION * FRAMERATE), f, plunk_pos)
+                pos = masspoints[0, count // 2]   # where to listen to
                 normalized = (pos[1] - height/2.) / (height/2.)
-
-                if i % 20 == 0:
-                    pygame.draw.lines(screen, red, False, masspoints[0])
-                    pygame.draw.circle(screen, blue, map(int, pos), RADIUS)
-
                 rec.add(normalized)
 
+            pygame.draw.lines(screen, red, False, masspoints[0])
+            pygame.draw.circle(screen, blue, map(int, masspoints[0, plunk_pos]), RADIUS)
 
             pygame.display.flip()
 
@@ -114,4 +111,48 @@ def main(physics, filename):
             pygame.display.set_caption("fps %.1f" % measured_fps)
 
             clock.tick(FRAMERATE)
+
+
+def main_headless(physics, filename, dtype=np.float64):
+    size = width, height = 600, 200
+    count = PARTICLE_COUNT
+
+    masspoints = np.empty((2, count, 2), dtype=dtype)
+    initpos = np.zeros(count, dtype=dtype)
+    for i in range(1, count):
+        initpos[i] = initpos[i - 1] + float(width) / count
+    masspoints[:, :, 0] = initpos
+    masspoints[:, :, 1] = height / 2
+
+    plunk_pos = count // 2.
+    plunk = Plunk()
+
+    rec = Recorder(filename)
+    t_start = time.time()
+    with rec.auto_write():
+        # plunk once at the start
+        plunk.plunk(calc_impulse(height * PLUNK_MULTIPLIER))
+
+        for _ in xrange(10 * FRAMERATE):
+            for _ in xrange(SUBDIVISION):
+                f = plunk.next()
+                physics(masspoints, 1./(SUBDIVISION * FRAMERATE), f, plunk_pos)
+                pos = masspoints[0, count // 2]   # where to listen to
+                normalized = (pos[1] - height/2.) / (height/2.)
+                rec.add(normalized)
+
+
+    t_end = time.time()
+    print("Completed in %ss" % round(t_end - t_start, 2))
+
+
+def choose_backend(choice):
+    if choice == 'numba':
+        import physics_numba
+        return physics_numba
+    elif choice == 'numpy':
+        import physics_numpy
+        return physics_numpy
+    else:
+        raise KeyError('Invalid backend "%s"' % choice)
 

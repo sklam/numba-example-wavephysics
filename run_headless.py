@@ -9,7 +9,4 @@ if __name__ == '__main__':
         print(e)
         print("Usage: python %s <numba|numpy> <recorded_file>" % sys.argv[0])
     else:
-        print("Click on the screen to plunk the string.")
-        print("Y-axis: top -- lighter; bottom -- heavier")
-        print("X-axis: position")
-        common.main(backend.physics, filename)
+        common.main_headless(backend.physics, filename)
