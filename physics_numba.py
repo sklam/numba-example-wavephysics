@@ -1,9 +1,9 @@
-from numba import f, d
+from numba import f4, f8
 from numba.decorators import jit
 
 from common import *
 
-@jit(arg_types=[d[:,:], d[:,:]])
+@jit(argtypes=[f8[:,:], f8[:,:]])
 def hooke(cpos, force):
     N = cpos.shape[0]
     for i in range(1, N):
@@ -23,7 +23,7 @@ def hooke(cpos, force):
         force[i, 0] += fx
         force[i, 1] += fy
 
-@jit(arg_types=[d[:,:], d[:,:], d[:,:], d[:,:], d])
+@jit(argtypes=[f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8])
 def verlet_integrate(npos, cpos, ppos, force, dt):
     N = cpos.shape[0]
     for i in range(N):
