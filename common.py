@@ -1,4 +1,9 @@
-import sys, pygame, time
+import sys, time
+try:
+    import pygame
+except ImportError:
+    pass
+
 try:
     from cPickle import pickle
 except ImportError:
@@ -7,14 +12,18 @@ import numpy as np
 from math import ceil
 import contextlib
 
+
 RADIUS = 1
 MASS = .01
-HOOKE_K = 1125000.
-SUBDIVISION = 184
+HOOKE_K = 2100000.
+#HOOKE_K = 1125000.
+#SUBDIVISION = 184
+SUBDIVISION = 300
 FRAMERATE = 60
 DAMPING = 0.0001
 PLUNK_MULTIPLIER = 20000.
-PARTICLE_COUNT = 64
+#PARTICLE_COUNT = 64
+PARTICLE_COUNT = 200
 
 class Recorder:
     def __init__(self, filename):
@@ -150,7 +159,10 @@ def choose_backend(choice):
     if choice == 'numba':
         import physics_numba
         return physics_numba
-    elif choice == 'numpy':
+    elif choice == 'numbapro':
+        import physics_numbapro
+        return physics_numbapro
+    elif choice == 'numba':
         import physics_numpy
         return physics_numpy
     else:
