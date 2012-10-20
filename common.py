@@ -15,15 +15,19 @@ import contextlib
 
 RADIUS = 1
 MASS = .01
-HOOKE_K = 2100000.
+
 #HOOKE_K = 1125000.
 #SUBDIVISION = 184
+HOOKE_K = 2100000.
 SUBDIVISION = 300
+#PARTICLE_COUNT = 64
+PARTICLE_COUNT = 200
+
 FRAMERATE = 60
 DAMPING = 0.0001
 PLUNK_MULTIPLIER = 20000.
-#PARTICLE_COUNT = 64
-PARTICLE_COUNT = 200
+
+
 
 class Recorder:
     def __init__(self, filename):
@@ -162,7 +166,7 @@ def choose_backend(choice):
     elif choice == 'numbapro':
         import physics_numbapro
         return physics_numbapro
-    elif choice == 'numba':
+    elif choice == 'numpy':
         import physics_numpy
         return physics_numpy
     else:

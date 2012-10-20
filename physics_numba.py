@@ -10,7 +10,7 @@ def hooke(cpos, force):
         dx = cpos[i, 0] - cpos[i - 1, 0]
         dy = cpos[i, 1] - cpos[i - 1, 1]
         dist = np.sqrt(dx**2 + dy**2)
-        fmag = -HOOKE_K * dist
+        fmag = -1 * HOOKE_K * dist # Numba AST does not take unary operator yet.
 
         cosine = dx / dist
         sine = dy / dist

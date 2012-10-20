@@ -1,4 +1,4 @@
-import sys, pygame, numpy as np
+import sys, numpy as np
 from math import ceil
 
 from common import *
